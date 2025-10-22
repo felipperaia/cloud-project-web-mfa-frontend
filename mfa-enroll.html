@@ -27,7 +27,6 @@
 
     if(!temp) {
       alert("Token de enrolamento ausente");
-      // Opcional: redirecione ou bloqueie a página
     }
 
     async function loadMfaEnroll() {
@@ -37,14 +36,11 @@
         return;
       }
       const data = await res.json();
-
       document.getElementById("mfaQr").innerHTML =
         `<img alt="QRCode" src="${data.qr_png_data_uri}" style="width:180px"/>`;
       document.getElementById("manualCode").innerText = data.secret;
 
-      // Guarde o segredo e username localmente se precisar (ou envie no POST)
-      window.mfaSecret = data.secret;
-      // Sua API atual pede username, se possível, ajuste backend pra obter do token
+      window.username = data.username;
     }
 
     loadMfaEnroll();
@@ -54,15 +50,11 @@
       const fd = new FormData(e.target);
       const code = fd.get("code").trim();
 
-      // Obtenha username conforme seu fluxo; aqui segurando "user123" como exemplo
-      const username = "user123"; 
-
       const res = await fetch(`${api}/api/mfa/enroll`, {
         method: "POST",
         headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({code, username})
+        body: JSON.stringify({code, username: window.username})
       });
-
       const data = await res.json();
 
       if(res.ok) {
