@@ -1,4 +1,20 @@
-<script>
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Minha Conta</title>
+  <link rel="stylesheet" href="static/css/styles.css" />
+</head>
+<body>
+  <main>
+    <h2>Minha Conta</h2>
+    <div id="userInfo"></div>
+    <div id="mfaPrompt"></div>
+    <button onclick="logout()">Sair</button>
+  </main>
+
+  <script>
 const api = "https://cloud-project-web-mfa-backend.onrender.com";
 
 async function getUserInfo() {
@@ -40,3 +56,5 @@ function logout() {
 
 getUserInfo();
 </script>
+</body>
+</html>
