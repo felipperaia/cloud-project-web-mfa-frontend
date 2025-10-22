@@ -10,8 +10,9 @@
   <main>
     <h2>Enrolar Autenticador</h2>
     <div id="mfaQr"></div>
+    <p>Ou digite o código manualmente:</p>
+    <p id="manualCode"></p>
     <form id="mfaForm">
-      <label>Digite um código TOTP do Microsoft Authenticator</label>
       <input name="code" maxlength="6" placeholder="000000" required/>
       <button type="submit">Validar e ativar</button>
     </form>
@@ -19,44 +20,60 @@
     <p><a href="index.html">Voltar</a></p>
   </main>
   <script>
-  const api = "https://cloud-project-web-mfa-backend.onrender.com";
-  // Busca dos dados do enrolamento
-  let secret = "", uid="";
-  const loadMfaEnroll = async () => {
-    // Token temp normalmente vem via query param
-    const url = new URL(location.href);
-    const temp = url.searchParams.get("temp");
-    if(!temp) return alert("Token de enrolamento ausente");
-    const res = await fetch(api + "/mfa/enroll?temp=" + encodeURIComponent(temp));
-    const data = await res.json();
-    secret = data.secret;
-    uid = data.uid || "";
-    document.getElementById("mfaQr").innerHTML =
-      `<img alt="QRCode" src="${data.qr_png_data_uri}" style="width:180px"/>` +
-      `<p>Manual: <b>${data.secret}</b></p>`;
-  };
-  loadMfaEnroll();
+    const api = "https://cloud-project-web-mfa-backend.onrender.com";
 
-  document.getElementById("mfaForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const body = {code: fd.get("code")};
-    // Envia secret e uid para ativar MFA
-    const res = await fetch(api + `/api/mfa/enroll?secret=${encodeURIComponent(secret)}&uid=${encodeURIComponent(uid)}`, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    if (data.ok) {
-      let codes = data.backup_codes.map(c=> `<code>${c}</code>` ).join("<br>");
-      document.getElementById("backupCodes").innerHTML =
-        `<h3>Backup codes: Salve!</h3>${codes}`;
-      alert("MFA ativado! Guarde seus backup codes.");
-    } else {
-      alert(data.detail || "Erro no enrolamento.");
+    const url = new URL(window.location.href);
+    const temp = url.searchParams.get("temp");
+
+    if(!temp) {
+      alert("Token de enrolamento ausente");
+      // Opcional: redirecione ou bloqueie a página
     }
-  });
+
+    async function loadMfaEnroll() {
+      const res = await fetch(`${api}/mfa/enroll?temp=${encodeURIComponent(temp)}`);
+      if(!res.ok) {
+        alert("Token inválido ou expirado");
+        return;
+      }
+      const data = await res.json();
+
+      document.getElementById("mfaQr").innerHTML =
+        `<img alt="QRCode" src="${data.qr_png_data_uri}" style="width:180px"/>`;
+      document.getElementById("manualCode").innerText = data.secret;
+
+      // Guarde o segredo e username localmente se precisar (ou envie no POST)
+      window.mfaSecret = data.secret;
+      // Sua API atual pede username, se possível, ajuste backend pra obter do token
+    }
+
+    loadMfaEnroll();
+
+    document.getElementById("mfaForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const code = fd.get("code").trim();
+
+      // Obtenha username conforme seu fluxo; aqui segurando "user123" como exemplo
+      const username = "user123"; 
+
+      const res = await fetch(`${api}/api/mfa/enroll`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({code, username})
+      });
+
+      const data = await res.json();
+
+      if(res.ok) {
+        let codes = data.backup_codes.map(c => `<code>${c}</code>`).join("<br>");
+        document.getElementById("backupCodes").innerHTML =
+          `<h3>Backup codes: Salve!</h3>${codes}`;
+        alert("MFA ativado com sucesso! Guarde seus códigos de backup.");
+      } else {
+        alert(data.detail || "Erro no enrolamento MFA.");
+      }
+    });
   </script>
 </body>
 </html>
