@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Cadastro</title>
+  <link rel="stylesheet" href="static/css/styles.css"/>
+</head>
+<body>
+  <main>
+    <h2>Cadastrar nova conta</h2>
+    <form id="registerForm">
+      <input name="email" type="email" placeholder="Email" required/>
+      <input name="username" placeholder="Username" required/>
+      <input name="password" type="password" placeholder="Senha" required/>
+      <button type="submit">Cadastrar</button>
+    </form>
+    <p><a href="index.html">Já tenho conta</a></p>
+  </main>
+  <script>
+  const api = location.origin.replace(/:\d+$/, ":8000");
+  document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const body = {
+      email: fd.get("email"),
+      username: fd.get("username"),
+      password: fd.get("password")
+    };
+    const res = await fetch(api + "/api/register", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert("Cadastro realizado! Confira seu email para ativar a conta.");
+      location.href = "index.html";
+    } else {
+      alert(data.detail || "Erro ao cadastrar.");
+    }
+  });
+  </script>
+</body>
+</html>

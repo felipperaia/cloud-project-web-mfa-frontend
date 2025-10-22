@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Recuperar senha</title>
+  <link rel="stylesheet" href="static/css/styles.css"/>
+</head>
+<body>
+  <main>
+    <h2>Recuperar senha</h2>
+    <form id="reqForm">
+      <input name="email" type="email" placeholder="Seu email" required/>
+      <button type="submit">Enviar link de redefinição</button>
+    </form>
+    <p><a href="index.html">Voltar ao login</a></p>
+  </main>
+  <script>
+  const api = location.origin.replace(/:\d+$/, ":8000");
+  document.getElementById("reqForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const res = await fetch(api + "/api/password-reset-request", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email: fd.get("email")})
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert("Email de recuperação enviado!");
+      location.href = "index.html";
+    } else {
+      alert(data.detail || "Erro ao enviar.");
+    }
+  });
+  </script>
+</body>
+</html>

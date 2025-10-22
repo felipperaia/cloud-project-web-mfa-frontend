@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Enrolamento MFA</title>
+  <link rel="stylesheet" href="static/css/styles.css"/>
+</head>
+<body>
+  <main>
+    <h2>Enrolar Autenticador</h2>
+    <div id="mfaQr"></div>
+    <form id="mfaForm">
+      <label>Digite um código TOTP do Microsoft Authenticator</label>
+      <input name="code" maxlength="6" placeholder="000000" required/>
+      <button type="submit">Validar e ativar</button>
+    </form>
+    <div id="backupCodes"></div>
+    <p><a href="index.html">Voltar</a></p>
+  </main>
+  <script>
+  const api = location.origin.replace(/:\d+$/, ":8000");
+  // Busca dos dados do enrolamento
+  let secret = "", uid="";
+  const loadMfaEnroll = async () => {
+    // Token temp normalmente vem via query param
+    const url = new URL(location.href);
+    const temp = url.searchParams.get("temp");
+    if(!temp) return alert("Token de enrolamento ausente");
+    const res = await fetch(api + "/mfa/enroll?temp=" + encodeURIComponent(temp));
+    const data = await res.json();
+    secret = data.secret;
+    uid = data.uid || "";
+    document.getElementById("mfaQr").innerHTML =
+      `<img alt="QRCode" src="${data.qr_png_data_uri}" style="width:180px"/>` +
+      `<p>Manual: <b>${data.secret}</b></p>`;
+  };
+  loadMfaEnroll();
+
+  document.getElementById("mfaForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const body = {code: fd.get("code")};
+    // Envia secret e uid para ativar MFA
+    const res = await fetch(api + `/api/mfa/enroll?secret=${encodeURIComponent(secret)}&uid=${encodeURIComponent(uid)}`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      let codes = data.backup_codes.map(c=> `<code>${c}</code>` ).join("<br>");
+      document.getElementById("backupCodes").innerHTML =
+        `<h3>Backup codes: Salve!</h3>${codes}`;
+      alert("MFA ativado! Guarde seus backup codes.");
+    } else {
+      alert(data.detail || "Erro no enrolamento.");
+    }
+  });
+  </script>
+</body>
+</html>

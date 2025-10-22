@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Sua conta</title>
+  <link rel="stylesheet" href="static/css/styles.css"/>
+</head>
+<body>
+  <main>
+    <h2>Minha Conta</h2>
+    <div id="userInfo"></div>
+    <button onclick="logout()">Sair</button>
+  </main>
+  <script>
+  const api = location.origin.replace(/:\d+$/, ":8000");
+  async function getUserInfo(){
+    const res = await fetch(api + "/api/home", {credentials:"include"});
+    if(res.status===200){
+      const data = await res.json();
+      document.getElementById("userInfo").innerHTML =
+        `<p>Username: <b>${data.username}</b></p>
+         <p>Email: <b>${data.email}</b></p>
+         <p>UserID: <b>${data.userid}</b></p>`;
+    } else {
+      alert("Não autenticado, faça login.");
+      location.href = "index.html";
+    }
+  }
+  function logout(){
+    document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    location.href = "index.html";
+  }
+  getUserInfo();
+  </script>
+</body>
+</html>

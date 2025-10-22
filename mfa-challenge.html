@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Desafio MFA</title>
+  <link rel="stylesheet" href="static/css/styles.css"/>
+</head>
+<body>
+  <main>
+    <h2>Digite seu código TOTP</h2>
+    <form id="mfaLoginForm">
+      <input name="code" maxlength="6" placeholder="000000" required/>
+      <button type="submit">Validar</button>
+    </form>
+  </main>
+  <script>
+  const api = location.origin.replace(/:\d+$/, ":8000");
+  document.getElementById("mfaLoginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const temp = sessionStorage.getItem("mfa_temp");
+    if (!temp) return alert("Token MFA ausente.");
+    const body = { temp_token: temp, code: fd.get("code") };
+    const res = await fetch(api + "/api/mfa/verify", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      sessionStorage.removeItem("mfa_temp");
+      location.href = "home.html";
+    } else {
+      alert(data.detail || "Código inválido.");
+    }
+  });
+  </script>
+</body>
+</html>

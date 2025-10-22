@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Login</title>
+  <link rel="stylesheet" href="static/css/styles.css"/>
+</head>
+<body>
+  <main>
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input name="username" placeholder="username" required/>
+      <input name="password" placeholder="password" type="password" required/>
+      <button type="submit">Entrar</button>
+    </form>
+    <p><a href="register.html">Não tem conta? Cadastre-se</a></p>
+    <p><a href="reset-request.html">Esqueci a senha</a></p>
+  </main>
+  <script>
+  const api = location.origin.replace(/:\d+$/, ":8000");
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const res = await fetch(api + "/api/login", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({username: fd.get("username"), password: fd.get("password")})
+    });
+    const data = await res.json();
+    if (data.mfa_required) {
+      sessionStorage.setItem("mfa_temp", data.temp_token);
+      location.href = "mfa-challenge.html";
+    } else if (data.ok) {
+      location.href = "home.html";
+    } else {
+      alert(data.detail || "Erro");
+    }
+  });
+  </script>
+</body>
+</html>
