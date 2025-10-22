@@ -15,7 +15,7 @@
     </form>
   </main>
   <script>
-  const api = location.origin.replace(/:\d+$/, ":8000");
+  const api = "https://cloud-project-web-mfa-backend.onrender.com";
   document.getElementById("mfaLoginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);

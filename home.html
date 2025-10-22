@@ -13,7 +13,7 @@
     <button onclick="logout()">Sair</button>
   </main>
   <script>
-  const api = location.origin.replace(/:\d+$/, ":8000");
+  const api = "https://cloud-project-web-mfa-backend.onrender.com";
   async function getUserInfo(){
     const res = await fetch(api + "/api/home", {credentials:"include"});
     if(res.status===200){
