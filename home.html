@@ -1,37 +1,60 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Sua conta</title>
-  <link rel="stylesheet" href="static/css/styles.css"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Minha Conta</title>
+  <link rel="stylesheet" href="static/css/styles.css" />
 </head>
 <body>
   <main>
     <h2>Minha Conta</h2>
     <div id="userInfo"></div>
+    <div id="mfaPrompt"></div>
     <button onclick="logout()">Sair</button>
   </main>
+
   <script>
-  const api = "https://cloud-project-web-mfa-backend.onrender.com";
-  async function getUserInfo(){
-    const res = await fetch(api + "/api/home", {credentials:"include"});
-    if(res.status===200){
-      const data = await res.json();
-      document.getElementById("userInfo").innerHTML =
-        `<p>Username: <b>${data.username}</b></p>
-         <p>Email: <b>${data.email}</b></p>
-         <p>UserID: <b>${data.userid}</b></p>`;
-    } else {
-      alert("Não autenticado, faça login.");
+    const api = "https://cloud-project-web-mfa-backend.onrender.com";
+
+    async function getUserInfo() {
+      const res = await fetch(api + "/api/home", { credentials: "include" });
+      if (res.status === 200) {
+        const data = await res.json();
+        document.getElementById("userInfo").innerHTML = `
+          <p>Username: <b>${data.username}</b></p>
+          <p>Email: <b>${data.email}</b></p>
+          <p>UserID: <b>${data.userid}</b></p>
+        `;
+
+        if (!data.mfa_enabled) {
+          // Pega token temporário para enrolar MFA
+          const tempRes = await fetch(api + "/api/mfa/enroll-token", { credentials: "include" });
+          if (tempRes.ok) {
+            const tempData = await tempRes.json();
+            const tempToken = tempData.temp_token;
+            document.getElementById("mfaPrompt").innerHTML = `
+              <p><b>MFA não ativado.</b> Por segurança, ative a autenticação de dois fatores.</p>
+              <a href="mfa-enroll.html?temp=${encodeURIComponent(tempToken)}">
+                <button>Ativar MFA</button>
+              </a>
+            `;
+          } else {
+            document.getElementById("mfaPrompt").innerText = "Erro ao obter token MFA.";
+          }
+        }
+      } else {
+        alert("Não autenticado, faça login.");
+        location.href = "index.html";
+      }
+    }
+
+    function logout() {
+      document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
       location.href = "index.html";
     }
-  }
-  function logout(){
-    document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    location.href = "index.html";
-  }
-  getUserInfo();
+
+    getUserInfo();
   </script>
 </body>
 </html>
